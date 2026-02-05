@@ -1,6 +1,8 @@
+import os
 import socket
 from Core.DataTransferLayer.protocol import Message
 from Core.DataTransferLayer.handshake import HandshakeManager
+from Core.DataTransferLayer.file_transfer import recv_file
 
 
 class tcpServer:
@@ -18,7 +20,7 @@ class tcpServer:
             while self.running:
                 try:
                     conn, addr = s.accept()
-                    conn.settimeout(30)
+                    conn.settimeout(300)  
                     with conn:
                         print(f"Połączono z {addr}")
                         self.handle_client(conn)
@@ -33,14 +35,45 @@ class tcpServer:
             encryption = HandshakeManager.server_handshake(conn)
             print("[Server] Klucz szyfrowania ustalony")
             
-            print("[Server] Czekam na wiadomość...")
-            received_msg = Message.deserialize(conn, encryption)
-            print(f"[Server] Otrzymano typ: {received_msg.type}, payload: {received_msg.payload}")
-            
-            print("[Server] Wysyłam odpowiedź...")
-            response = Message("RESPONSE", {"status": "OK", "message": "Wiadomość odebrana"}, encrypted=True)
-            conn.sendall(response.serialize(encryption))
-            print("[Server] Odpowiedź wysłana")
+            while True:
+                try:
+                    print("[Server] Czekam na wiadomość...")
+                    received_msg = Message.deserialize(conn, encryption)
+                    print(f"[Server] Otrzymano typ: {received_msg.type}, payload: {received_msg.payload}")
+                    
+                    if received_msg.type == "FILE_START":
+                        filename = received_msg.payload['filename']
+                        filesize = received_msg.payload['size']
+                        
+                        dest_dir = os.path.join(os.getcwd(), "received_files")
+                        os.makedirs(dest_dir, exist_ok=True)
+                        
+                        # Przekaż filename i filesize jako parametry
+                        saved = recv_file(conn, dest_dir, filename, filesize, encryption)
+                        print(f"[Server] Plik zapisany: {saved}")
+                        
+                        # Wyślij potwierdzenie
+                        response = Message("FILE_ACK", {"status": "OK", "saved_path": saved}, encrypted=True)
+                        conn.sendall(response.serialize(encryption))
+                        print("[Server] Wysłano potwierdzenie pliku")
+                        
+                    elif received_msg.type == "GREETING":
+                        print("[Server] Otrzymano greeting, wysyłam odpowiedź...")
+                        response = Message("GREETING_ACK", {"status": "OK"}, encrypted=True)
+                        conn.sendall(response.serialize(encryption))
+                        print("[Server] Odpowiedź wysłana")
+                        
+                    else:
+                        print(f"[Server] Nieznany typ wiadomości: {received_msg.type}")
+                        response = Message("ERROR", {"error": "Unknown message type"}, encrypted=True)
+                        conn.sendall(response.serialize(encryption))
+                        
+                except Exception as e:
+                    print(f"[Server] Błąd w pętli: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    break
+                    
         except Exception as e:
             print(f"[Server] Błąd handlera: {e}")
             import traceback
