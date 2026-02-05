@@ -3,7 +3,6 @@ import socket
 class socket_utils:
     @staticmethod
     def recv_all(sock, n):
-        """Odbiera dokładnie n bajtów z socketa"""
         data = b""
         while len(data) < n:
             try:

@@ -48,11 +48,9 @@ class tcpServer:
                         dest_dir = os.path.join(os.getcwd(), "received_files")
                         os.makedirs(dest_dir, exist_ok=True)
                         
-                        # Przekaż filename i filesize jako parametry
                         saved = recv_file(conn, dest_dir, filename, filesize, encryption)
                         print(f"[Server] Plik zapisany: {saved}")
                         
-                        # Wyślij potwierdzenie
                         response = Message("FILE_ACK", {"status": "OK", "saved_path": saved}, encrypted=True)
                         conn.sendall(response.serialize(encryption))
                         print("[Server] Wysłano potwierdzenie pliku")

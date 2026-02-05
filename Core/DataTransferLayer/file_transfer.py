@@ -67,7 +67,6 @@ def send_file(sock, filepath: str, encryption: Encryption = None, chunk_size: in
 
 
 
-# file_transfer.py
 
 def recv_file(sock, dest_dir: str, filename: str, total_size: int, encryption: Encryption = None) -> str:
     

@@ -36,7 +36,6 @@ def test_file_transfer_plain():
         filename = meta.payload.get("filename")
         total_size = meta.payload.get("size")
         
-        # Teraz wywołaj recv_file z ekstrahowanymi parametrami
         received_path = recv_file(conn, dest, filename, total_size, encryption=None)
         conn.close()
 
@@ -81,7 +80,6 @@ def test_file_transfer_encrypted():
         conn.settimeout(10)
         dest = tempfile.mkdtemp()
         
-        # Odbierz FILE_START message (zaszyfrowany)
         meta = Message.deserialize(conn, encryption=enc)
         assert meta.type == "FILE_START"
         filename = meta.payload.get("filename")

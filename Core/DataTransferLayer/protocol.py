@@ -26,7 +26,6 @@ class Message:
 
     @staticmethod
     def deserialize(sock, encryption: Encryption = None) -> "Message":
-        """Odbiera wiadomość z socketa i deserializuje ją"""
         length_bytes = socket_utils.recv_all(sock, 4)
         message_length = struct.unpack("!I", length_bytes)[0]
         
@@ -38,7 +37,6 @@ class Message:
             except Exception as e:
                 print(f"[Deszyfrowanie] Błąd: {e}, wiadomość może być niezaszyfrowana")
         
-        # Dekodujemy JSON
         message_dict = json.loads(data.decode('utf-8'))
         
         return Message(message_dict["type"], message_dict["payload"], encrypted=encryption is not None)
