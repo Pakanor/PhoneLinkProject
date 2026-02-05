@@ -1,4 +1,6 @@
 import socket
+from Core.DataTransferLayer.protocol import Message
+from Core.DataTransferLayer.handshake import HandshakeManager
 
 
 class tcpServer:
@@ -16,6 +18,7 @@ class tcpServer:
             while self.running:
                 try:
                     conn, addr = s.accept()
+                    conn.settimeout(30)
                     with conn:
                         print(f"Połączono z {addr}")
                         self.handle_client(conn)
@@ -27,9 +30,18 @@ class tcpServer:
     
     def handle_client(self, conn):
         try:
-            data = conn.recv(1024)
-            if data:
-                print(f"Otrzymano: {data.decode()}")
-                conn.sendall(b"OK")
+            encryption = HandshakeManager.server_handshake(conn)
+            print("[Server] Klucz szyfrowania ustalony")
+            
+            print("[Server] Czekam na wiadomość...")
+            received_msg = Message.deserialize(conn, encryption)
+            print(f"[Server] Otrzymano typ: {received_msg.type}, payload: {received_msg.payload}")
+            
+            print("[Server] Wysyłam odpowiedź...")
+            response = Message("RESPONSE", {"status": "OK", "message": "Wiadomość odebrana"}, encrypted=True)
+            conn.sendall(response.serialize(encryption))
+            print("[Server] Odpowiedź wysłana")
         except Exception as e:
-            print(f"Błąd handlera: {e}")
+            print(f"[Server] Błąd handlera: {e}")
+            import traceback
+            traceback.print_exc()
