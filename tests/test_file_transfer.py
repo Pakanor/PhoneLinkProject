@@ -7,6 +7,7 @@ import socket
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from Core.DataTransferLayer.file_transfer import send_file, recv_file
+from Core.DataTransferLayer.protocol import Message
 from Core.DataTransferLayer.encryption import Encryption
 
 
@@ -29,7 +30,15 @@ def test_file_transfer_plain():
         conn, _ = server_socket.accept()
         conn.settimeout(10)
         dest = tempfile.mkdtemp()
-        received_path = recv_file(conn, dest, encryption=None)
+        
+        # Odbierz FILE_START message
+        meta = Message.deserialize(conn, encryption=None)
+        assert meta.type == "FILE_START"
+        filename = meta.payload.get("filename")
+        total_size = meta.payload.get("size")
+        
+        # Teraz wywołaj recv_file z ekstrahowanymi parametrami
+        received_path = recv_file(conn, dest, filename, total_size, encryption=None)
         conn.close()
 
     server_thread = threading.Thread(target=server_task, daemon=True)
@@ -72,7 +81,15 @@ def test_file_transfer_encrypted():
         conn, _ = server_socket.accept()
         conn.settimeout(10)
         dest = tempfile.mkdtemp()
-        received_path = recv_file(conn, dest, encryption=enc)
+        
+        # Odbierz FILE_START message (zaszyfrowany)
+        meta = Message.deserialize(conn, encryption=enc)
+        assert meta.type == "FILE_START"
+        filename = meta.payload.get("filename")
+        total_size = meta.payload.get("size")
+        
+        # Teraz wywołaj recv_file z ekstrahowanymi parametrami
+        received_path = recv_file(conn, dest, filename, total_size, encryption=enc)
         conn.close()
 
     server_thread = threading.Thread(target=server_task, daemon=True)
