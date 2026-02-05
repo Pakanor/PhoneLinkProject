@@ -1,0 +1,11 @@
+-r requirements.txt
+
+pytest>=9.0
+pytest-cov>=7.0
+pytest-timeout>=2.1
+
+flake8>=6.0
+pylint>=3.0
+black>=23.0
+
+sphinx>=6.0
