@@ -4,8 +4,7 @@ import socket
 import time
 from Core.DataTransferLayer.protocol import Message
 from Core.DataTransferLayer.handshake import HandshakeManager
-from Core.DataTransferLayer.file_transfer import send_file
-
+from Core.ConnectionLayer.socket_utils import user_file_input
 class Phone:
     def add_service(self,zeroconf,type,name):
 
@@ -31,30 +30,8 @@ class Phone:
                 
                 response = Message.deserialize(s, encryption)
                 print(f"[Klient] Odpowiedź typ: {response.type}, payload: {response.payload}")
-                import os
+                user_file_input(s,encryption)
                 
-                while True:
-                    file_path = input("Ścieżka do pliku (Enter = koniec): ").strip()
-                    
-                    if not file_path:
-                        print("[Klient] Koniec wysyłania plików")
-                        break
-                    
-                    if not os.path.exists(file_path):
-                        print(f"[Klient] ⚠️  Plik nie istnieje: {file_path}")
-                        continue
-                    
-                    if not os.path.isfile(file_path):
-                        print(f"[Klient] ⚠️  To nie jest plik: {file_path}")
-                        continue
-                    
-                    try:
-                        send_file(s, file_path, encryption)
-                        print(f"[Klient] ✓ Plik {file_path} wysłany pomyślnie")
-                    except Exception as e:
-                        print(f"[Klient] ❌ Błąd: {e}")
-                        import traceback
-                        traceback.print_exc()
                     
                 
 

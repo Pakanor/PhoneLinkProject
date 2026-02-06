@@ -2,7 +2,7 @@ import os
 import struct
 import socket
 from Core.DataTransferLayer.protocol import Message
-from Core.ConnectionLayer.socket_utils import socket_utils
+from Core.ConnectionLayer.socket_utils import recv_all
 from Core.DataTransferLayer.encryption import Encryption
 
 
@@ -80,10 +80,10 @@ def recv_file(sock, dest_dir: str, filename: str, total_size: int, encryption: E
         with open(dest_path, "wb") as f:
             while received < total_size:
                 try:
-                    length_bytes = socket_utils.recv_all(sock, 4)
+                    length_bytes = recv_all(sock, 4)
                     chunk_len = struct.unpack("!I", length_bytes)[0]
                     
-                    chunk_data = socket_utils.recv_all(sock, chunk_len)
+                    chunk_data = recv_all(sock, chunk_len)
 
                     if encryption:
                         try:

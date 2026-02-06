@@ -6,7 +6,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from Core.ConnectionLayer.socket_utils import socket_utils
+from Core.ConnectionLayer.socket_utils import recv_all
 
 
 def test_recv_all_small_data():
@@ -30,7 +30,7 @@ def test_recv_all_small_data():
     conn, _ = server_socket.accept()
     conn.settimeout(5)
     
-    data = socket_utils.recv_all(conn, 11)  
+    data = recv_all(conn, 11)  
     
     assert data == b"Hello World"
     
@@ -62,7 +62,7 @@ def test_recv_all_large_data():
     conn, _ = server_socket.accept()
     conn.settimeout(10)
     
-    data = socket_utils.recv_all(conn, len(large_data))
+    data = recv_all(conn, len(large_data))
     
     assert len(data) == len(large_data)
     assert data == large_data
@@ -89,7 +89,7 @@ def test_recv_all_timeout():
     client.sendall(b"Hello")
     
     with pytest.raises(ConnectionError):
-        socket_utils.recv_all(conn, 100)
+        recv_all(conn, 100)
     
     client.close()
     conn.close()
@@ -117,7 +117,7 @@ def test_recv_all_connection_closed():
     conn.settimeout(5)
     
     with pytest.raises(ConnectionError):
-        socket_utils.recv_all(conn, 1000)
+        recv_all(conn, 1000)
     
     client_thread.join(timeout=5)
     conn.close()

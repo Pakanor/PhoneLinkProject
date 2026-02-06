@@ -1,7 +1,7 @@
 import json
 import struct
 import base64
-from Core.ConnectionLayer.socket_utils import socket_utils
+from Core.ConnectionLayer.socket_utils import recv_all
 from Core.DataTransferLayer.encryption import Encryption
 
 class Message:
@@ -26,10 +26,10 @@ class Message:
 
     @staticmethod
     def deserialize(sock, encryption: Encryption = None) -> "Message":
-        length_bytes = socket_utils.recv_all(sock, 4)
+        length_bytes = recv_all(sock, 4)
         message_length = struct.unpack("!I", length_bytes)[0]
         
-        data = socket_utils.recv_all(sock, message_length)
+        data = recv_all(sock, message_length)
         
         if encryption:
             try:
