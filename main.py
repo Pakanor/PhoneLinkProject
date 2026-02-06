@@ -12,5 +12,5 @@ server_thread = threading.Thread(target=server.start, daemon=True)
 server_thread.start()
 
 service.connect()
-if input("Press Enter to stop the server...\n"):
+if input("Press Enter to stop the server...\n") == "exit":
     server.stop()

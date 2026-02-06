@@ -23,8 +23,10 @@ def user_file_input(s, encryption):
     while True:
         file_path = input("Ścieżka do pliku (Enter = koniec): ").strip()
         
-        if not file_path:
-            print("[user_file_input] Koniec wysyłania plików")
+        if file_path.lower == "exit":
+            from Core.DataTransferLayer.protocol import Message
+            msg = Message("SHUTDOWN", {"user": "telefon", "action": "disconnect"}, encrypted=True)
+
             break
         
         if not os.path.exists(file_path):
@@ -42,4 +44,38 @@ def user_file_input(s, encryption):
             print(f"[user_file_input] ❌ Błąd: {e}")
             traceback.print_exc()
 
+    return file_path
+
+
+def file_type(received_msg,conn,encryption):
+    from Core.DataTransferLayer.protocol import Message
+    from Core.DataTransferLayer.file_transfer import recv_file
+
+    if received_msg.type == "FILE_START":
+        filename = received_msg.payload['filename']
+        filesize = received_msg.payload['size']
+                        
+        dest_dir = os.path.join(os.getcwd(), "received_files")
+        os.makedirs(dest_dir, exist_ok=True)
+                        
+        saved = recv_file(conn, dest_dir, filename, filesize, encryption)
+        print(f"[Server] Plik zapisany: {saved}")
+                        
+        response = Message("FILE_ACK", {"status": "OK", "saved_path": saved}, encrypted=True)
+        conn.sendall(response.serialize(encryption))
+        print("[Server] Wysłano potwierdzenie pliku")
+                        
+    elif received_msg.type == "GREETING":
+        print("[Server] Otrzymano greeting, wysyłam odpowiedź...")
+        response = Message("GREETING_ACK", {"status": "OK"}, encrypted=True)
+        conn.sendall(response.serialize(encryption))
+        print("[Server] Odpowiedź wysłana")
+    
+                        
+    else:
+        print(f"[Server] Nieznany typ wiadomości: {received_msg.type}")
+        response = Message("ERROR", {"error": "Unknown message type"}, encrypted=True)
+        conn.sendall(response.serialize(encryption))
+
+    
 

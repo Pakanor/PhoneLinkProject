@@ -1,7 +1,7 @@
 
 from zeroconf import Zeroconf, ServiceInfo
 import socket
-
+import time
 class RegisterService:
     def get_local_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -39,8 +39,7 @@ class RegisterService:
 
         zeroconf = Zeroconf()
         zeroconf.register_service(info)
-        input("Service running... Enter to stop\n")
-
+        time.sleep(5)
 if __name__ == "__main__":
     service = RegisterService()
     service.connect()    

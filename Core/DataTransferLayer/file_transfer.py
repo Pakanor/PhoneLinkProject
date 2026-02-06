@@ -25,7 +25,7 @@ def send_file(sock, filepath: str, encryption: Encryption = None, chunk_size: in
         
         print(f"[send_file] Wysyłanie pliku: {filename} ({total_size} bajtów)")
 
-        meta = Message("FILE_START", {"filename": filename, "size": total_size})
+        meta = Message("FILE_START", {"filename": filename, "size": total_size}, encrypted=True)
         sock.sendall(meta.serialize(encryption))
         print(f"[send_file] Metadane wysłane")
 
