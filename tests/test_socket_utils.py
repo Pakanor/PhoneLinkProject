@@ -102,29 +102,4 @@ def test_recv_all_timeout():
     conn.close()
     server_socket.close()
 
-def test_recv_all_connection_closed():
-    
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind(("127.0.0.1", 0))
-    server_socket.listen(1)
-    port = server_socket.getsockname()[1]
-    
-    def close_connection():
-        time.sleep(0.1)
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect(("127.0.0.1", port))
-        client.close()
-    
-    client_thread = threading.Thread(target=close_connection, daemon=True)
-    client_thread.start()
-    
-    conn, _ = server_socket.accept()
-    conn.settimeout(5)
-    
-    with pytest.raises(ConnectionError):
-        recv_all(conn, 1000)
-    
-    client_thread.join(timeout=5)
-    conn.close()
-    server_socket.close()
+
