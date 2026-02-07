@@ -2,7 +2,7 @@ import os
 import struct
 import socket
 from Core.DataTransferLayer.protocol import Message
-from Core.ConnectionLayer.socket_utils import recv_all
+from Core.ConnectionLayer.socket_utils import recv_all,ClientDisconnected
 from Core.DataTransferLayer.encryption import Encryption
 
 
@@ -101,6 +101,10 @@ def recv_file(sock, dest_dir: str, filename: str, total_size: int, encryption: E
                 except OSError as e:
                     print(f"[recv_file] Błąd OS (socket zamknięty?): {e}")
                     raise ConnectionError(f"Połączenie przerwane: {e}")
+                except ClientDisconnected:
+                    print("Klient rozłączył się.")
+                    sock.close()
+                    return
                 except Exception as e:
                     print(f"[recv_file] Nieoczekiwany błąd: {e}")
                     raise

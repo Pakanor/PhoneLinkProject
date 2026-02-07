@@ -3,16 +3,30 @@ import traceback
 import os
 
 
+class ClientDisconnected(Exception):
+    pass
+
+class ClientDisconnected(Exception):
+    pass
+
+
 def recv_all(sock, n):
     data = b""
     while len(data) < n:
         try:
             chunk = sock.recv(n - len(data))
-            if not chunk:
-                raise ConnectionError(f"Połączenie przerwane. Oczekiwano {n} bajtów, otrzymano {len(data)}")
+
+            if chunk == b"":
+                raise ClientDisconnected("zamknieto polaczenie")
+
             data += chunk
+
+        except ConnectionResetError:
+            raise ClientDisconnected("reset polaczenia")
+
         except socket.timeout:
-            raise ConnectionError(f"Timeout: oczekiwano {n} bajtów, otrzymano {len(data)}")
+            raise TimeoutError(f"timeout")
+
     return data
 
 

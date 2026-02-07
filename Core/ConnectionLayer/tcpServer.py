@@ -37,21 +37,15 @@ class tcpServer:
         try:
             encryption = HandshakeManager.server_handshake(conn)
             print("[Server] Klucz szyfrowania ustalony")
-            
-            
             while True:
-
                 try:
                     print("[Server] Czekam na wiadomość...")
                     received_msg = Message.deserialize(conn, encryption)
                     print(f"[Server] Otrzymano typ: {received_msg.type}, payload: {received_msg.payload}")
                     
                     file_type(received_msg,conn,encryption)
-                    #user_file_input(conn,encryption) tu logika wysylania jutro!!!!
                     
-                    
-                    
-                        
+                    #user_file_input(conn,encryption) tu logika wysylania jutro!!!!                 
                 except Exception as e:
                     print(f"[Server] Błąd w pętli: {e}")
                     import traceback

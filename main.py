@@ -10,7 +10,17 @@ server = tcpServer(HOST, PORT)
 
 server_thread = threading.Thread(target=server.start, daemon=True)
 server_thread.start()
-
 service.connect()
-if input("Press Enter to stop the server...\n") == "exit":
-    server.stop()
+while True:
+    cmd = input(">>> ").strip()
+
+    if cmd == "exit":
+        server.stop()
+        break
+
+    elif cmd == "send":
+        filename = input("Podaj nazwę pliku: ").strip()
+
+    elif cmd == "help":
+        print("send - wyslij plik")
+        print("exit - zatrzymaj serwer")    
