@@ -73,28 +73,34 @@ def test_recv_all_large_data():
 
 
 def test_recv_all_timeout():
-    
+    import socket
+    import pytest
+    from Core.ConnectionLayer.socket_utils import recv_all
+
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind(("127.0.0.1", 0))
     server_socket.listen(1)
     port = server_socket.getsockname()[1]
-    
+
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(("127.0.0.1", port))
-    
+
     conn, _ = server_socket.accept()
-    conn.settimeout(0.5)
-    
+    conn.settimeout(0.5)  
+
     client.sendall(b"Hello")
-    
-    with pytest.raises(ConnectionError):
+
+    import time
+    start = time.time()
+    with pytest.raises(TimeoutError):
         recv_all(conn, 100)
+    end = time.time()
     
+    assert end - start >= 0.5  
     client.close()
     conn.close()
     server_socket.close()
-
 
 def test_recv_all_connection_closed():
     
