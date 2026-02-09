@@ -26,17 +26,28 @@ class Message:
 
     @staticmethod
     def deserialize(sock, encryption: Encryption = None) -> "Message":
-        length_bytes = recv_all(sock, 4)
-        message_length = struct.unpack("!I", length_bytes)[0]
-        
-        data = recv_all(sock, message_length)
-        
-        if encryption:
-            try:
-                data = encryption.decrypt(data)
-            except Exception as e:
-                print(f"[Deszyfrowanie] Błąd: {e}, wiadomość może być niezaszyfrowana")
-        
-        message_dict = json.loads(data.decode('utf-8'))
-        
-        return Message(message_dict["type"], message_dict["payload"], encrypted=encryption is not None)
+        try:
+            length_bytes = recv_all(sock, 4)
+            message_length = struct.unpack("!I", length_bytes)[0]
+            
+            data = recv_all(sock, message_length)
+            
+            if not data:
+                raise ValueError("puste")
+            
+            if encryption:
+                try:
+                    data = encryption.decrypt(data)
+                except Exception as e:
+                    print(f"[Deszyfrowanie] Błąd: {e}, wiadomość może być niezaszyfrowana")
+            
+            decoded_data = data.decode('utf-8')
+            if not decoded_data.strip():
+                raise ValueError("puste")
+            
+            message_dict = json.loads(decoded_data)
+            
+            return Message(message_dict["type"], message_dict["payload"], encrypted=encryption is not None)
+        except Exception as e:
+            print(f"[Deserialize] Błąd podczas deserializacji: {e}")
+            raise

@@ -11,6 +11,11 @@ server = tcpServer(HOST, PORT)
 server_thread = threading.Thread(target=server.start, daemon=True)
 server_thread.start()
 service.connect()
+
+print("Serwer gotów. Komendy:")
+print("  send <plik> - wysłij plik do klienta")
+print("  exit - zatrzymaj serwer")
+
 while True:
     cmd = input(">>> ").strip()
 
@@ -18,9 +23,9 @@ while True:
         server.stop()
         break
 
-    elif cmd == "send":
-        filename = input("Podaj nazwę pliku: ").strip()
+    elif cmd.startswith("send "):
+        filename = cmd.replace("send ", "").strip()
+        server.send_file_to_client(filename)
 
-    elif cmd == "help":
-        print("send - wyslij plik")
-        print("exit - zatrzymaj serwer")    
+    else:
+        print("Nieznana komenda. Dostępne: send <plik>, exit")    

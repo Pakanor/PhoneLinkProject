@@ -2,14 +2,57 @@ import os
 import socket
 from Core.DataTransferLayer.handshake import HandshakeManager
 import threading
-from Core.ConnectionLayer.socket_utils import file_type,user_file_input
+from Core.ConnectionLayer.socket_utils import server_handle_message,user_file_input
 from Core.DataTransferLayer.protocol import Message
+
+
 
 class tcpServer:
     def __init__(self,host,port):
         self.host = host
         self.port = port
         self.running = False
+        self.clients = []  
+        self.clients_lock = threading.Lock()
+        
+    def add_client(self, conn):
+        with self.clients_lock:
+            self.clients.append(conn)
+    
+    def remove_client(self, conn):
+        with self.clients_lock:
+            self.clients = [c for c in self.clients if (c[0] if isinstance(c, tuple) else c) != conn]
+    
+    def send_file_to_client(self, filename):
+        import os
+        from Core.DataTransferLayer.protocol import Message
+        from Core.DataTransferLayer.file_transfer import send_file
+        
+        file_path = os.path.join(os.getcwd(), filename)
+        
+        if not os.path.exists(file_path):
+            print(f"[Server]  Plik nie istnieje: {file_path}")
+            return
+        
+        with self.clients_lock:
+            if not self.clients:
+                print("[Server]  Brak podłączonych klientów")
+                return
+            conn, encryption = self.clients[0]  
+        
+        try:
+            file_size = os.path.getsize(file_path)
+            file_start_msg = Message("FILE_START", {"filename": filename, "size": file_size}, encrypted=True)
+            conn.sendall(file_start_msg.serialize(encryption))
+            print(f"[Server]  FILE_START wysłane: {filename} ({file_size} bytes)")
+            
+            send_file(conn, file_path, encryption)
+            print(f"[Server] Plik {filename} wysłany pomyślnie")
+        except Exception as e:
+            print(f"[Server] Błąd wysyłania: {e}")
+            import traceback
+            traceback.print_exc()
+        
         
     def start(self):
         self.running = True
@@ -32,20 +75,24 @@ class tcpServer:
     def stop(self):
         self.running = False
     
+    
     def handle_client(self, conn):
 
         try:
             encryption = HandshakeManager.server_handshake(conn)
             print("[Server] Klucz szyfrowania ustalony")
+            
+            with self.clients_lock:
+                self.clients.append((conn, encryption))
+            
             while True:
                 try:
                     print("[Server] Czekam na wiadomość...")
                     received_msg = Message.deserialize(conn, encryption)
                     print(f"[Server] Otrzymano typ: {received_msg.type}, payload: {received_msg.payload}")
                     
-                    file_type(received_msg,conn,encryption)
-                    
-                    #user_file_input(conn,encryption) tu logika wysylania jutro!!!!                 
+                    server_handle_message(received_msg, conn, encryption)
+             
                 except Exception as e:
                     print(f"[Server] Błąd w pętli: {e}")
                     import traceback
@@ -56,3 +103,5 @@ class tcpServer:
             print(f"[Server] Błąd handlera: {e}")
             import traceback
             traceback.print_exc()
+        finally:
+            self.remove_client(conn)

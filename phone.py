@@ -5,7 +5,7 @@ import threading
 
 from Core.DataTransferLayer.protocol import Message
 from Core.DataTransferLayer.handshake import HandshakeManager
-from Core.ConnectionLayer.socket_utils import user_file_input
+from Core.ConnectionLayer.socket_utils import user_file_input ,client_handle_message
 
 
 class Phone:
@@ -27,10 +27,25 @@ phone = Phone()
 zeroconf = Zeroconf()
 browser = ServiceBrowser(zeroconf, "_phonelink._tcp.local.", phone)
 
-print("Scanning...")
 
 phone.found_event.wait()  
 zeroconf.close()
+
+def listen_server(sock, encryption):
+    from Core.ConnectionLayer.socket_utils import ClientDisconnected
+    
+    while True:
+        try:
+            msg = Message.deserialize(sock, encryption)
+            client_handle_message(msg, sock, encryption)
+        except ClientDisconnected as e:
+            print("[Client] Serwer rozłączył się:", e)
+            break
+        except Exception as e:
+            print("[Client] Błąd w listen_server:", e)
+            import traceback
+            traceback.print_exc()
+            break
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.settimeout(300)
@@ -38,12 +53,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
     encryption = HandshakeManager.client_handshake(s)
     print("[Klient] Klucz szyfrowania ustalony")
-
     msg = Message("GREETING", {"user": "telefon", "action": "connect"}, encrypted=True)
     s.sendall(msg.serialize(encryption))
 
     response = Message.deserialize(s, encryption)
-    print(f"[Klient] Odpowiedź typ: {response.type}, payload: {response.payload}")
 
+    print(f"[Klient] Odpowiedź typ: {response.type}, payload: {response.payload}")
+    listener_thread = threading.Thread(target=listen_server, args=(s, encryption), daemon=True)
+    listener_thread.start()
+    
     user_file_input(s, encryption)
+
 
