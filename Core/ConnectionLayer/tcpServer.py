@@ -12,16 +12,9 @@ class tcpServer:
         self.host = host
         self.port = port
         self.running = False
-        self.clients = []  
-        self.clients_lock = threading.Lock()
-        
-    def add_client(self, conn):
-        with self.clients_lock:
-            self.clients.append(conn)
+        self.client = None
+   
     
-    def remove_client(self, conn):
-        with self.clients_lock:
-            self.clients = [c for c in self.clients if (c[0] if isinstance(c, tuple) else c) != conn]
     
     def send_file_to_client(self, filename):
         import os
@@ -34,11 +27,11 @@ class tcpServer:
             print(f"[Server]  Plik nie istnieje: {file_path}")
             return
         
-        with self.clients_lock:
-            if not self.clients:
-                print("[Server]  Brak podłączonych klientów")
-                return
-            conn, encryption = self.clients[0]  
+        
+        if not self.client:
+            print("[Server]  Brak podłączonych klientów")
+            return
+        conn, encryption = self.client  
         
         try:
             file_size = os.path.getsize(file_path)
@@ -71,6 +64,8 @@ class tcpServer:
                     
                 except Exception as e:
                     print(f"Błąd: {e}")
+
+              
                 
     def stop(self):
         self.running = False
@@ -81,10 +76,7 @@ class tcpServer:
         try:
             encryption = HandshakeManager.server_handshake(conn)
             print("[Server] Klucz szyfrowania ustalony")
-            
-            with self.clients_lock:
-                self.clients.append((conn, encryption))
-            
+            self.client = (conn, encryption)
             while True:
                 try:
                     print("[Server] Czekam na wiadomość...")
@@ -104,4 +96,12 @@ class tcpServer:
             import traceback
             traceback.print_exc()
         finally:
-            self.remove_client(conn)
+            self.remove_client()
+
+    def remove_client(self):
+        if self.client:
+            try:
+                self.client[0].close()
+            except:
+                pass
+            self.client = None
