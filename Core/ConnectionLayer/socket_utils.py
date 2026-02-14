@@ -2,7 +2,7 @@ import socket
 import traceback
 import os
 
-
+BASE_DIR = os.path.expanduser("~/PhoneLink_received")
 class ClientDisconnected(Exception):
     pass
 
@@ -78,7 +78,7 @@ def server_handle_message(received_msg,conn,encryption):
         filesize = received_msg.payload['size']
         print(f"[Server] Otrzymano FILE_START: {filename} ({filesize} bytes)")
         
-        dest_dir = os.path.join(os.getcwd(), "received_files")
+        dest_dir = os.path.join(BASE_DIR, "from_clients")
         os.makedirs(dest_dir, exist_ok=True)
         
         saved = recv_file(conn, dest_dir, filename, filesize, encryption)
@@ -109,7 +109,7 @@ def client_handle_message(received_msg, conn, encryption):
         filename = received_msg.payload['filename']
         filesize = received_msg.payload['size']
 
-        dest_dir = os.path.join(os.getcwd(), "received_files_from_server")
+        dest_dir = os.path.join(BASE_DIR, "from_server")
         os.makedirs(dest_dir, exist_ok=True)
 
         saved = recv_file(conn, dest_dir, filename, filesize, encryption)  

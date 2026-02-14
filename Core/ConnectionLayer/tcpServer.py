@@ -16,36 +16,40 @@ class tcpServer:
    
     
     
-    def send_file_to_client(self, filename):
+    def send_file_to_client(self, file_path, mode="server"):
         import os
         from Core.DataTransferLayer.protocol import Message
         from Core.DataTransferLayer.file_transfer import send_file
         
-        file_path = os.path.join(os.getcwd(), filename)
-        
+
         if not os.path.exists(file_path):
             print(f"[Server]  Plik nie istnieje: {file_path}")
             return
-        
-        
+
         if not self.client:
             print("[Server]  Brak podłączonych klientów")
             return
+
         conn, encryption = self.client  
-        
+
         try:
             file_size = os.path.getsize(file_path)
-            file_start_msg = Message("FILE_START", {"filename": filename, "size": file_size}, encrypted=True)
+            filename = os.path.basename(file_path)  
+            file_start_msg = Message(
+                "FILE_START",
+                {"filename": filename, "size": file_size},
+                encrypted=True
+            )
             conn.sendall(file_start_msg.serialize(encryption))
             print(f"[Server]  FILE_START wysłane: {filename} ({file_size} bytes)")
-            
-            send_file(conn, file_path, encryption)
+
+            send_file(conn, file_path, encryption)  
             print(f"[Server] Plik {filename} wysłany pomyślnie")
         except Exception as e:
             print(f"[Server] Błąd wysyłania: {e}")
             import traceback
             traceback.print_exc()
-        
+            
         
     def start(self):
         self.running = True
