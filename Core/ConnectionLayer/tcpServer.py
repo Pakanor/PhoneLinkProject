@@ -43,7 +43,7 @@ class tcpServer:
             conn.sendall(file_start_msg.serialize(encryption))
             print(f"[Server]  FILE_START wysłane: {filename} ({file_size} bytes)")
 
-            send_file(conn, file_path, encryption)  
+            send_file(conn, file_path, encryption,send_metadata=False)  
             print(f"[Server] Plik {filename} wysłany pomyślnie")
         except Exception as e:
             print(f"[Server] Błąd wysyłania: {e}")

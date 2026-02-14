@@ -9,11 +9,15 @@ from Core.DataTransferLayer.encryption import Encryption
 CHUNK_SIZE = 64 * 1024
 
 
-def send_file(sock, filepath: str, encryption: Encryption = None, chunk_size: int = CHUNK_SIZE):
+def send_file(sock, filepath: str, encryption: Encryption = None, chunk_size: int = CHUNK_SIZE,send_metadata: bool = True):
     
     try:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Plik nie istnieje: {filepath}")
+        if send_metadata:
+            meta = Message("FILE_START", {"filename": filename, "size": total_size}, encrypted=True)
+            sock.sendall(meta.serialize(encryption))
+            print(f"[send_file] Metadane wysłane")
         
         try:
             sock.getpeername()
