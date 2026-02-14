@@ -14,6 +14,8 @@ def send_file(sock, filepath: str, encryption: Encryption = None, chunk_size: in
     try:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"Plik nie istnieje: {filepath}")
+        filename = os.path.basename(filepath)
+        total_size = os.path.getsize(filepath)
         if send_metadata:
             meta = Message("FILE_START", {"filename": filename, "size": total_size}, encrypted=True)
             sock.sendall(meta.serialize(encryption))
@@ -24,8 +26,7 @@ def send_file(sock, filepath: str, encryption: Encryption = None, chunk_size: in
         except (OSError, socket.error) as e:
             raise ConnectionError(f"Socket nie jest połączony: {e}")
         
-        filename = os.path.basename(filepath)
-        total_size = os.path.getsize(filepath)
+        
         
         print(f"[send_file] Wysyłanie pliku: {filename} ({total_size} bajtów)")
 
