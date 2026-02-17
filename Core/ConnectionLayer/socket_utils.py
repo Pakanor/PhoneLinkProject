@@ -6,8 +6,6 @@ BASE_DIR = os.path.expanduser("~/PhoneLink_received")
 class ClientDisconnected(Exception):
     pass
 
-class ClientDisconnected(Exception):
-    pass
 
 
 def recv_all(sock, n):
@@ -30,35 +28,6 @@ def recv_all(sock, n):
     return data
 
 
-def user_file_input(s, encryption):
-    
-    from Core.DataTransferLayer.file_transfer import send_file
-    
-    while True:
-        file_path = input("Ścieżka do pliku (Enter = koniec): ").strip()
-        
-        if file_path.lower == "exit":
-            from Core.DataTransferLayer.protocol import Message
-            msg = Message("SHUTDOWN", {"user": "telefon", "action": "disconnect"}, encrypted=True)
-
-            break
-        
-        if not os.path.exists(file_path):
-            print(f"[user_file_input] ⚠️  Plik nie istnieje: {file_path}")
-            continue
-        
-        if not os.path.isfile(file_path):
-            print(f"[user_file_input] ⚠️  To nie jest plik: {file_path}")
-            continue
-        
-        try:
-            send_file(s, file_path, encryption)
-            print(f"[user_file_input] ✓ Plik {file_path} wysłany pomyślnie")
-        except Exception as e:
-            print(f"[user_file_input] ❌ Błąd: {e}")
-            traceback.print_exc()
-
-    return file_path
 
 
 def server_handle_message(received_msg,conn,encryption):
@@ -71,7 +40,6 @@ def server_handle_message(received_msg,conn,encryption):
         response = Message("GREETING_ACK", {"status": "OK"}, encrypted=True)
         conn.sendall(response.serialize(encryption))
         print("[Server] GREETING_ACK wysłane")
-        print("[Server] Gotów do wysyłania i odbierania plików")
     
     elif received_msg.type == "FILE_START":
         filename = received_msg.payload['filename']

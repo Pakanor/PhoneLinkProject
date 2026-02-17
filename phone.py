@@ -5,7 +5,7 @@ import threading
 
 from Core.DataTransferLayer.protocol import Message
 from Core.DataTransferLayer.handshake import HandshakeManager
-from Core.ConnectionLayer.socket_utils import user_file_input ,client_handle_message
+from Core.ConnectionLayer.socket_utils import client_handle_message
 
 
 class Phone:
@@ -61,7 +61,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     print(f"[Klient] Odpowiedź typ: {response.type}, payload: {response.payload}")
     listener_thread = threading.Thread(target=listen_server, args=(s, encryption), daemon=True)
     listener_thread.start()
+    if input("exit") == "exit":
+        print("leci")
     
-    user_file_input(s, encryption)
+    
 
 

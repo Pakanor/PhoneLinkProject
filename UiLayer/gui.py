@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
+from tkinter import messagebox
 class P2PGUI:
     def __init__(self, on_file_selected_callback):
         
@@ -13,27 +14,25 @@ class P2PGUI:
         self.root.configure(bg='#2b2b2b')
         
         self._setup_ui()
+    def show_error(self, msg):
+        self.status_label.config(text=f"Błąd: {msg}", fg="#ff4d4d")
+        messagebox.showerror("Błąd", msg)
+
         
     def _setup_ui(self):
         
         
-        mode_frame = tk.Frame(self.root, bg='#2b2b2b')
-        mode_frame.pack(pady=20)
         
-        tk.Label(mode_frame, text="Tryb:", bg='#2b2b2b', fg='white', font=('Arial', 12)).pack(side=tk.LEFT, padx=5)
         
-        self.mode = tk.StringVar(value='server')
-        tk.Radiobutton(mode_frame, text="Serwer", variable=self.mode, value='server', 
-                      bg='#2b2b2b', fg='white', selectcolor='#3b3b3b').pack(side=tk.LEFT, padx=10)
-        tk.Radiobutton(mode_frame, text="Klient", variable=self.mode, value='client',
-                      bg='#2b2b2b', fg='white', selectcolor='#3b3b3b').pack(side=tk.LEFT, padx=10)
+        
+        
         
         self.drop_frame = tk.Frame(self.root, bg='#3b3b3b', relief=tk.RAISED, bd=2)
         self.drop_frame.pack(pady=30, padx=40, fill=tk.BOTH, expand=True)
         
         self.drop_label = tk.Label(
             self.drop_frame,
-            text="📁\n\nPrzeciągnij plik tutaj\nlub kliknij aby wybrać",
+            text="drop",
             bg='#3b3b3b',
             fg='white',
             font=('Arial', 14),
@@ -65,9 +64,7 @@ class P2PGUI:
 
 
 
-def handle_file_selected(filepath, mode):
-    
-    print(f"[{mode.upper()}] Wybrany plik: {filepath}")
+
     
     
 

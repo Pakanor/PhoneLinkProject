@@ -2,7 +2,7 @@ import os
 import socket
 from Core.DataTransferLayer.handshake import HandshakeManager
 import threading
-from Core.ConnectionLayer.socket_utils import server_handle_message,user_file_input
+from Core.ConnectionLayer.socket_utils import server_handle_message
 from Core.DataTransferLayer.protocol import Message
 
 
@@ -61,13 +61,15 @@ class tcpServer:
                 try:
                     conn, addr = s.accept()
                     print(f"Połączono z {addr}")
-                    conn.settimeout(300)
+                    conn.settimeout(3600)
                     
                     t = threading.Thread(target=self.handle_client, args=(conn,))
                     t.start()
                     
                 except Exception as e:
-                    print(f"Błąd: {e}")
+                    self.running = False
+                    break
+            conn.close()
 
               
                 
