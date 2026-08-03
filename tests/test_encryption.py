@@ -3,12 +3,12 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from Core.DataTransferLayer.encryption import Encryption
+from Core.DataTransferLayer.encryption import Encryption, DecryptionError
 
 def test_encrypt_decrypt():
     enc = Encryption()
     plaintext = "Testowa wiadomość".encode("utf-8")
-    
+
     encrypted = enc.encrypt(plaintext)
     assert encrypted != plaintext, "Zaszyfrowany tekst nie może być równy plaintext"
 
@@ -19,15 +19,6 @@ def test_key_length():
     key = Encryption.generate_key()
     assert len(key) == Encryption.KEY_SIZE
 
-def test_b64_encoding():
-    enc = Encryption()
-    key_b64 = enc.get_key_b64()
-    
-    assert isinstance(key_b64, str)
-    
-    enc2 = Encryption.from_b64(key_b64)
-    assert enc2.shared_key == enc.shared_key, "Odtworzony klucz musi być taki sam"
-
 def test_custom_key():
     key = Encryption.generate_key()
     enc = Encryption(key)
@@ -36,7 +27,7 @@ def test_custom_key():
 def test_encrypt_decrypt_multiple():
     enc = Encryption()
     messages = [b"Hello", b"123456", b"!@#$%^&*()"]
-    
+
     for msg in messages:
         encrypted = enc.encrypt(msg)
         decrypted = enc.decrypt(encrypted)
@@ -45,14 +36,41 @@ def test_encrypt_decrypt_multiple():
 def test_wrong_key_fails():
     enc1 = Encryption()
     enc2 = Encryption()
-    
+
     plaintext = b"Sekret"
     encrypted = enc1.encrypt(plaintext)
-    
-    with pytest.raises(Exception):
+
+    with pytest.raises(DecryptionError):
         enc2.decrypt(encrypted)
+
+def test_tampered_ciphertext_raises():
+    enc = Encryption()
+    ciphertext = bytearray(enc.encrypt(b"important data"))
+    ciphertext[-1] ^= 0x01
+
+    with pytest.raises(DecryptionError):
+        enc.decrypt(bytes(ciphertext))
 
 def test_derive_key_returns_correct_length():
     key, salt = Encryption.derive_key("haslo123")
     assert len(key) == Encryption.KEY_SIZE
     assert len(salt) == 16
+
+def test_ecdh_shared_key_agreement():
+    a_priv = Encryption.generate_key_pair()
+    b_priv = Encryption.generate_key_pair()
+
+    key_a = Encryption.derive_shared_key(a_priv, Encryption.public_key_b64(b_priv))
+    key_b = Encryption.derive_shared_key(b_priv, Encryption.public_key_b64(a_priv))
+
+    assert key_a == key_b, "Obie strony muszą wyprowadzić ten sam klucz"
+    assert len(key_a) == Encryption.KEY_SIZE
+
+def test_hkdf_deterministic():
+    secret = b"shared-secret-bytes"
+    k1 = Encryption.derive_key_from_secret(secret)
+    k2 = Encryption.derive_key_from_secret(secret)
+
+    assert k1 == k2
+    assert len(k1) == Encryption.KEY_SIZE
+    assert k1 != secret
